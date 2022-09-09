@@ -36,6 +36,7 @@ int motorSpeedB = 0;
 int xAxis = 0;
 int yAxis = 0;
 int flag = 1;
+bool forward = true;
 
 /////////////////////////////////////////
 
@@ -49,12 +50,13 @@ IPAddress AP_SERVER(192, 168, 4, 1);
 typedef struct _udp_packet {
   int pwm_l;
   int pwm_r;
+  bool forward;
 } UDP_PACKET;
 
 WiFiUDP Udp;
 //UDP_PACKET packet = {1, "room", 0, true};
 //UDP_PACKET packet = {2, "kitchen", 0, false};
-UDP_PACKET packet = {1,1};
+UDP_PACKET packet = {1,1, true};
 
 /////////////////////////////////////////////////
 void setup() {
@@ -118,6 +120,7 @@ void loop() {
     yAxis = int(710.47*(q.x - 0.72) + 1023);
     xAxis = int(710.47*(q.y - 0.72) + 1023);
     if (yAxis < 470) {
+      forward = true;
       //              digitalWrite(in1, HIGH);
       //              digitalWrite(in2, LOW);
       //              digitalWrite(in3, HIGH);
@@ -125,6 +128,7 @@ void loop() {
       motorSpeedA = map(yAxis, 470, 0, 0, 255);
       motorSpeedB = map(yAxis, 470, 0, 0, 255);
     } else if (yAxis > 550) {
+      forward = false;
       //              digitalWrite(in1, LOW);
       //              digitalWrite(in2, HIGH);
       //              digitalWrite(in3, LOW);
@@ -175,10 +179,11 @@ void loop() {
     Serial.println("");
     packet.pwm_l = motorSpeedA;
     packet.pwm_r = motorSpeedB;
-    Serial.println("PWM L is ");
-    Serial.println(packet.pwm_l);
-    Serial.println("PWM R is ");
-    Serial.println(packet.pwm_r);
+    packet.forward = forward;
+//    Serial.println("PWM L is ");
+//    Serial.println(packet.pwm_l);
+//    Serial.println("PWM R is ");
+//    Serial.println(packet.pwm_r);
     Udp.beginPacket(AP_SERVER, SERVER_PORT);
     Udp.write((byte *)&packet, sizeof(UDP_PACKET));
     Udp.endPacket();

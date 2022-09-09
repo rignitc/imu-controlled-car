@@ -11,6 +11,7 @@ IPAddress AP_SERVER(192, 168, 4, 1);
 typedef struct _udp_packet {
   int pwm_l;
   int pwm_r;
+  bool forward;
 } UDP_PACKET;
 
 WiFiUDP Udp;
@@ -60,6 +61,8 @@ void loop() {
       Serial.print(packet.pwm_l);
       Serial.print("Right pwm: ");
       Serial.print(packet.pwm_r);
+      Serial.print("Forward: ");
+      Serial.print(packet.forward);
       Serial.println("");
   }
 }
