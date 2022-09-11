@@ -1,6 +1,13 @@
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 
+#define in1 D1
+#define in2 D2
+#define in3 D3
+#define in4 D5
+#define ena D6
+#define enb D7
+
 const unsigned int SERVER_PORT  = 9999;
 const char *SERVER_NAME         = "NODEMCU";
 const char *SERVER_PASWD        = "";
@@ -18,6 +25,11 @@ typedef struct _udp_packet {
 WiFiUDP Udp;
 UDP_PACKET packet;
 
+bool stop_car = false;
+bool forward = true;
+int pwm_l = 0;
+int pwm_r = 0;
+
 void setup() {
   Serial.begin(115200);
   Serial.println();
@@ -32,6 +44,13 @@ void setup() {
 
   Serial.println("Starting connection to server...");
   Udp.begin(SERVER_PORT);
+  
+  pinMode(in1, OUTPUT);
+  pinMode(in2, OUTPUT);
+  pinMode(in3, OUTPUT);
+  pinMode(in4, OUTPUT);
+  pinMode(ena, OUTPUT);
+  pinMode(enb, OUTPUT);
 }
 
 void loop() {
@@ -67,6 +86,26 @@ void loop() {
       Serial.print("Stop Car: ");
       Serial.print(packet.stop_car);
       Serial.println("");
+      pwm_l = packet.pwm_l;
+      pwm_r = packet.pwm_r;
+      forward = packet.forward;
+      stop_car = packet.stop_car;
+      if(!stop_car){
+        if(forward){
+          digitalWrite(in1, 1);
+          digitalWrite(in2, 0);
+          digitalWrite(in3, 0);
+          digitalWrite(in4, 1);
+        }
+        else{
+          digitalWrite(in1, 0);
+          digitalWrite(in2, 1);
+          digitalWrite(in3, 1);
+          digitalWrite(in4, 0);
+        }
+        analogWrite(ena, pwm_l);
+        analogWrite(enb, pwm_r);
+      }
   }
 }
 
