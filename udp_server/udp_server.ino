@@ -12,6 +12,7 @@ typedef struct _udp_packet {
   int pwm_l;
   int pwm_r;
   bool forward;
+  bool stop_car;
 } UDP_PACKET;
 
 WiFiUDP Udp;
@@ -63,6 +64,8 @@ void loop() {
       Serial.print(packet.pwm_r);
       Serial.print("Forward: ");
       Serial.print(packet.forward);
+      Serial.print("Stop Car: ");
+      Serial.print(packet.stop_car);
       Serial.println("");
   }
 }

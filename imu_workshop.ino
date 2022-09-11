@@ -37,8 +37,17 @@ int xAxis = 0;
 int yAxis = 0;
 int flag = 1;
 bool forward = true;
+bool stop_car = false;
 
 /////////////////////////////////////////
+const int flexPin = A0;      // Pin connected to voltage divider output
+
+// Change these constants according to your project's design
+const float VCC = 5;      // voltage at Ardunio 5V line
+const float R_DIV = 33000.0;  // resistor used to create a voltage divider
+const float flatResistance = 52000.0; // resistance when flat
+const float bendResistance = 150000.0
+////////////////////////////////////
 
 const unsigned int SERVER_PORT  = 9999;
 const char *SERVER_NAME         = "NODEMCU";
@@ -51,6 +60,7 @@ typedef struct _udp_packet {
   int pwm_l;
   int pwm_r;
   bool forward;
+  bool stop_car;
 } UDP_PACKET;
 
 WiFiUDP Udp;
@@ -77,7 +87,8 @@ void setup() {
   Serial.println(" connected");
   Udp.begin(SERVER_PORT);
   ////////////////////////////////////
-
+  pinMode(flexPin, INPUT);
+  ///////////////////////////////////
   
   //Wire.begin();    
   #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
@@ -177,9 +188,11 @@ void loop() {
     Serial.print("MotorSpeedB:");
     Serial.print(motorSpeedB);
     Serial.println("");
+    stop_car = get_flex();
     packet.pwm_l = motorSpeedA;
     packet.pwm_r = motorSpeedB;
     packet.forward = forward;
+    packet.stop_car = stop_car;
 //    Serial.println("PWM L is ");
 //    Serial.println(packet.pwm_l);
 //    Serial.println("PWM R is ");
@@ -246,10 +259,14 @@ void loop() {
   }
 
 }
-void send_pwm(int pwm_l, int pwm_r){
-  packet.pwm_l = pwm_l;
-  packet.pwm_r = pwm_r;
-  Udp.beginPacket(AP_SERVER, SERVER_PORT);
-  Udp.write((byte *)&packet, sizeof(UDP_PACKET));
-  Udp.endPacket();
+bool get_flex(){
+  int ADCflex = analogRead(flexPin);
+  float Vflex = ADCflex * VCC / 1023.0;
+  float Rflex = R_DIV * (VCC / Vflex - 1.0);
+
+  float angle = map(Rflex, flatResistance, bendResistance, 0, 90.0);
+  if(angle > 60){
+    return false;
+  }
+  return true;
 }
